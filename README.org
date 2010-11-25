@@ -1,3 +1,9 @@
 * rpd-simulation
 This project is a library for basic discrete event simulation, heavily
 inspired by simpy.
+* Usage
+See /examples
+* todo
+** spatial simulations
+   CLOCK: [2010-11-25 Thu 15:50]--[2010-11-25 Thu 18:09] =>  2:19
+   have a 2d discrete system based on an array, not very fast at all.

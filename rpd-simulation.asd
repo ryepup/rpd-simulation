@@ -7,7 +7,8 @@
                #:iterate
                #:cl-heap)
   :components ((:file "package")
-               (:file "rpd-simulation")))
+               (:file "rpd-simulation")
+	       (:file "spatial-simulation")))
 
 (asdf:defsystem #:rpd-simulation-examples
   :serial t

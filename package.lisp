@@ -7,6 +7,7 @@
 			  #:yield)
   (:shadowing-import-from #:alexandria
 			  #:when-let
+			  #:with-unique-names
 			  #:ensure-list)
   (:export #:activate
 	   #:simulate
@@ -14,5 +15,11 @@
 	   #:self
 	   #:defprocess
 	   #:yield
-	   #:with-simulation))
+	   #:spatial
+	   #:look-around
+	   #:empty-p
+	   #:location
+	   #:with-simulation
+	   #:do-board
+	   #:with-spatial-simulation))
 
