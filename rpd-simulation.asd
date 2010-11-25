@@ -9,3 +9,12 @@
   :components ((:file "package")
                (:file "rpd-simulation")))
 
+(asdf:defsystem #:rpd-simulation-examples
+  :serial t
+  :depends-on (#:rpd-simulation)
+  :components ((:module
+		:examples
+		:serial t
+		:components ((:file "package")
+			     (:file "message")))))
+
