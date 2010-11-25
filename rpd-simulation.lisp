@@ -42,15 +42,14 @@
 	   (iterate
 	     (for i from 0)
 	     (with queue = (queue sim))
-	     (for next-priority = (priority queue))
-	     (while (and next-priority
-			 (or (null until) (< i until))))
 	     (setf (current-time sim) i)
-	     (when (= i next-priority)
+	     (while (or (null until) (< i until)))
+	     (iterate
+	       (for next-priority = (priority queue))
+	       (while (and next-priority
+			   (= next-priority i)))
 	       (let ((process (cl-heap:dequeue queue)))
-		 (unless (%simulate process nil)
-		   (setf (processes sim)
-			 (delete process (processes sim))))))
+		 (%simulate process nil)))
 	     (finally (return i))))
 
 (defclass process ()
