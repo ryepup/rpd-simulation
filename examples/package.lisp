@@ -1,3 +1,3 @@
 
 (defpackage #:rpd-simulation-examples
-  (:use #:cl #:rpd-simulation))
+  (:use #:cl #:rpd-simulation #:iterate))

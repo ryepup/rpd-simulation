@@ -11,7 +11,7 @@
 
 (asdf:defsystem #:rpd-simulation-examples
   :serial t
-  :depends-on (#:rpd-simulation)
+  :depends-on (#:rpd-simulation #:iterate)
   :components ((:module
 		:examples
 		:serial t
