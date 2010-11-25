@@ -1,0 +1,3 @@
+* rpd-simulation
+This project is a library for basic discrete event simulation, heavily
+inspired by simpy.
