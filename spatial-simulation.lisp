@@ -4,7 +4,29 @@
   ((location :accessor location :initarg :location)
    (sight-range :accessor sight-range
 		:initarg :sight-range
-		:initform 1)))
+		:initform 1)
+   (size :accessor size :initarg :size :initform 1)))
+
+(defun %rectangle (location size)
+  (rectangles:make-rectangle
+   :lows (iter (for c in-vector location)
+	       (collect (- c size)))
+   :highs (iter (for c in-vector location)
+		(collect (+ c size)))))
+
+(defmethod rectangle ((obj spatial))
+	   (%rectangle (location obj) (size obj)))
+
+(defclass spatial-simulation (simulation)
+  ((board :accessor board)))
+
+(defgeneric rectangle (thing))
+(defclass spatial2d-simulation (spatial-simulation)
+  ((spatial-tree
+    :accessor spatial-tree
+    :initform (spatial-trees:make-spatial-tree
+	       :r :rectfun #'rectangle))))
+
 
 (defgeneric look-around (thing &optional predicate)
   (:documentation "returns all the spots the thing can see that match the predicate")
@@ -15,6 +37,9 @@
 				     (sight-range spatial)))))
 
 (defgeneric find-near (sim location range)
+  (:method ((sim spatial2d-simulation) location range)
+	   (spatial-trees:search (%rectangle location range)
+				 (spatial-tree sim)))
   (:method ((sim spatial-simulation) location range)
 	   (let ((x (first location))
 		 (y (second location))
@@ -46,14 +71,16 @@
 	      :initarg :max-speed
 	      :initform nil)))
 
-(defclass spatial-simulation (simulation)
-  ((board :accessor board)))
 
 (defmethod %activate :after ((sim spatial-simulation) (p spatial) at)
 	   (declare (ignore at))
 	   (set-cell (first (location p))
 		     (second (location p))
 		     p sim))
+
+(defmethod %activate :after ((sim spatial2d-simulation) (p spatial) at)
+	   (declare (ignore at))
+	   (spatial-trees:insert p (spatial-tree sim)))
 
 (defun create-board (dimensions &optional (sim *simulation*))
   (setf (board sim) (make-array dimensions)))

@@ -4,7 +4,8 @@
 
 ;;; "rpd-simulation" goes here. Hacks and glory await!
 (defclass simulation ()
-  ((queue :accessor queue :initform (make-instance 'cl-heap:priority-queue))
+  ((queue :accessor queue :initform (make-instance 'cl-heap:priority-queue)
+	  :initarg :queue)
    (processes :accessor processes :initform nil)
    (current-time :accessor current-time :initform 0)))
 
@@ -13,14 +14,18 @@
 
 (defmacro with-simulation (() &rest body)
   "opens a simulation context"
-  `(let ((*simulation* (make-instance 'simulation)))
+  `(let ((*simulation* (make-instance 'simulation :queue (pileup:make-heap #'< :key #'cdr ))))
      ,@body))
+
 
 (defgeneric %schedule (simulation process at)
   (:method ((sim simulation) process at)
-	   (cl-heap:enqueue (queue sim)
-			    process
-			    (+ at (current-time sim)))))
+	   (%schedule (queue sim) process
+			     (+ at (current-time sim))))
+  (:method ((q cl-heap:priority-queue) process at)
+	   (cl-heap:enqueue q process at))
+  (:method ((q pileup:heap) process at)
+	   (pileup:heap-insert (cons process at) q)))
 
 (defun schedule (process &optional (at 1))
   (%schedule *simulation* process at))
@@ -36,24 +41,39 @@
 
 (defgeneric priority (thing)
   (:method ((pq cl-heap:priority-queue))
-	   (first (cl-heap:peep-at-heap (slot-value pq 'cl-heap:heap)))))
+	   (first (cl-heap:peep-at-heap (slot-value pq 'cl-heap:heap))))
+  (:method ((q pileup:heap))
+	   (cdr (pileup:heap-top q))))
+
+(defgeneric next-process (thing)
+  (:method ((sim simulation)) (next-process (queue sim)))
+  (:method ((q cl-heap:priority-queue)) (cl-heap:dequeue q))
+  (:method ((q pileup:heap))
+	   (car (pileup:heap-pop q))))
+
+(defgeneric simulate-step (sim)
+  (:method ((sim simulation))
+	   (let ((queue (queue sim)))
+	     (incf (current-time sim))
+	     (iterate
+	       (for next-priority = (priority queue))
+	       (while (and next-priority
+			   (= next-priority
+			      (current-time sim))))
+	       (let ((process (next-process queue)))
+		 (%simulate process nil nil))))
+	   (note "step")))
 
 (defgeneric %simulate (thing until stop-if))
 (defmethod %simulate ((sim simulation) until stop-if)
 	   (iterate
 	     (for i from 0)
-	     (while (and (or (null until) (< i until))
-			 (or (null stop-if) (not (funcall stop-if (processes sim))))
-			 (priority queue)))
-	     (with queue = (queue sim))
-	     (setf (current-time sim) i)
-	     (iterate
-	       (for next-priority = (priority queue))
-	       (while (and next-priority
-			   (= next-priority i)))
-	       (let ((process (cl-heap:dequeue queue)))
-		 (%simulate process nil nil)))
-	     (note "step finished")
+	     (while (and (or (null until)
+			     (< i until))
+			 (or (null stop-if)
+			     (not (funcall stop-if
+					   (processes sim))))))
+	     (simulate-step sim)
 	     (finally (return (values i sim)))))
 
 (defclass process ()
@@ -84,15 +104,21 @@
 
 (defmacro defprocess (name superclasses slots &rest extras)
   (let ((action-body (rest (find :action extras :key #'car)))
-	(extras (remove :action extras :key #'car)))
+	(func-body (rest (find :function extras :key #'car)))
+	(extras (remove-if  (lambda (i)
+			      (member i '(:action :function)))
+			    extras :key #'car)))
     `(progn
        (defclass ,name (process ,@superclasses)
 	 ,slots
 	 ,@extras)
-       (defmethod initialize-instance :after ((p ,name) &key &allow-other-keys)
-		  (setf (coroutine p)
-			(let ((self p))
-			  (declare (ignorable self))
-			  (make-coroutine ()			    
-			    ,@action-body
-			    )))))))
+       ,(when func-body
+	 `(defmethod generate ((self ,name)) ,@func-body))
+       ,(when action-body
+	 `(defmethod initialize-instance :after ((p ,name) &key &allow-other-keys)
+		     (setf (coroutine p)
+			   (let ((self p))
+			     (declare (ignorable self))
+			     (make-coroutine ()			    
+			       ,@action-body
+			       ))))))))
