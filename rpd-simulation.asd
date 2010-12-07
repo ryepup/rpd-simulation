@@ -5,7 +5,7 @@
   :depends-on (#:alexandria
                #:rpd-coroutines
                #:iterate #:spatial-trees
-	       #:pileup #:cl-heap)
+	       #:pileup)
   :components ((:file "package")
                (:file "rpd-simulation")
 	       (:file "spatial-simulation")))

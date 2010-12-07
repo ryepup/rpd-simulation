@@ -91,8 +91,6 @@
 (defun get-cell (x y &optional (sim *simulation*))
   (aref (board sim) x y))
 
-
-
 (defmacro with-spatial-simulation ((&key (board nil board-supplied-p)) &body body)
   `(let ((*simulation* (make-instance 'spatial-simulation)))
      ,(when board-supplied-p

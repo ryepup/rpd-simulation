@@ -4,7 +4,7 @@
 
 ;;; "rpd-simulation" goes here. Hacks and glory await!
 (defclass simulation ()
-  ((queue :accessor queue :initform (make-instance 'cl-heap:priority-queue)
+  ((queue :accessor queue :initform (pileup:make-heap #'< :key #'cdr )
 	  :initarg :queue)
    (processes :accessor processes :initform nil)
    (current-time :accessor current-time :initform 0)))
@@ -14,18 +14,15 @@
 
 (defmacro with-simulation (() &rest body)
   "opens a simulation context"
-  `(let ((*simulation* (make-instance 'simulation :queue (pileup:make-heap #'< :key #'cdr ))))
+  `(let ((*simulation* (make-instance 'simulation :queue )))
      ,@body))
 
 
 (defgeneric %schedule (simulation process at)
   (:method ((sim simulation) process at)
-	   (%schedule (queue sim) process
-			     (+ at (current-time sim))))
-  (:method ((q cl-heap:priority-queue) process at)
-	   (cl-heap:enqueue q process at))
-  (:method ((q pileup:heap) process at)
-	   (pileup:heap-insert (cons process at) q)))
+	   (pileup:heap-insert
+	    (cons process (+ at (current-time sim)))
+	    (queue sim))))
 
 (defun schedule (process &optional (at 1))
   (%schedule *simulation* process at))
@@ -40,16 +37,12 @@
   process)
 
 (defgeneric priority (thing)
-  (:method ((pq cl-heap:priority-queue))
-	   (first (cl-heap:peep-at-heap (slot-value pq 'cl-heap:heap))))
   (:method ((q pileup:heap))
 	   (cdr (pileup:heap-top q))))
 
 (defgeneric next-process (thing)
-  (:method ((sim simulation)) (next-process (queue sim)))
-  (:method ((q cl-heap:priority-queue)) (cl-heap:dequeue q))
-  (:method ((q pileup:heap))
-	   (car (pileup:heap-pop q))))
+  (:method ((sim simulation))
+	   (car (pileup:heap-pop (queue sim)))))
 
 (defgeneric simulate-step (sim)
   (:method ((sim simulation))
@@ -60,7 +53,7 @@
 	       (while (and next-priority
 			   (= next-priority
 			      (current-time sim))))
-	       (let ((process (next-process queue)))
+	       (let ((process (next-process sim)))
 		 (%simulate process nil nil))))
 	   (note "step")))
 
