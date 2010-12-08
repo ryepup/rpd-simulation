@@ -2,13 +2,14 @@
 
 (asdf:defsystem #:rpd-simulation
   :serial t
-  :depends-on (#:alexandria
+  :depends-on (#:alexandria #:cl-geometry
                #:rpd-coroutines
                #:iterate #:spatial-trees
 	       #:pileup)
   :components ((:file "package")
                (:file "rpd-simulation")
-	       (:file "spatial-simulation")))
+	       (:file "spatial-simulation")
+	       (:file "user")))
 
 (asdf:defsystem #:rpd-simulation-examples
   :serial t

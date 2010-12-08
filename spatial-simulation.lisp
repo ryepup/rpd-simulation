@@ -1,4 +1,4 @@
-(in-package #:rpd-simulation)
+(in-package #:rpd-simulation-impl)
 
 (defclass spatial ()
   ((location :accessor location :initarg :location)
@@ -7,12 +7,12 @@
 		:initform 1)
    (size :accessor size :initarg :size :initform 1)))
 
-(defun %rectangle (location size)
+(defun %rectangle (location size
+		   &aux (x (x location))
+		   (y (y location)))
   (rectangles:make-rectangle
-   :lows (iter (for c in-vector location)
-	       (collect (- c size)))
-   :highs (iter (for c in-vector location)
-		(collect (+ c size)))))
+   :lows (list (- x size) (- y size)) 
+   :highs (list (+ x size) (+ y size))))
 
 (defmethod rectangle ((obj spatial))
 	   (%rectangle (location obj) (size obj)))
@@ -41,8 +41,8 @@
 	   (spatial-trees:search (%rectangle location range)
 				 (spatial-tree sim)))
   (:method ((sim spatial-simulation) location range)
-	   (let ((x (first location))
-		 (y (second location))
+	   (let ((x (x location))
+		 (y (y location))
 		 (dim (board-dimensions sim))
 		 (offsets (loop for i from (* -1 range) to range
 				collect i)))
@@ -57,11 +57,7 @@
 				    (mod (+ y y-offset)
 					 (second dim))))))))
 
-
-
 (defgeneric empty-p (thing))
-
-
 
 (defclass mobile (spatial)
   ((velocity :accessor velocity
@@ -72,13 +68,13 @@
 	      :initform nil)))
 
 
-(defmethod %activate :after ((sim spatial-simulation) (p spatial) at)
+(defmethod activate :after ((sim spatial-simulation) (p spatial) at)
 	   (declare (ignore at))
-	   (set-cell (first (location p))
-		     (second (location p))
+	   (set-cell (x (location p))
+		     (y (location p))
 		     p sim))
 
-(defmethod %activate :after ((sim spatial2d-simulation) (p spatial) at)
+(defmethod activate :after ((sim spatial2d-simulation) (p spatial) at)
 	   (declare (ignore at))
 	   (spatial-trees:insert p (spatial-tree sim)))
 
@@ -106,4 +102,11 @@
 	     ,@body))))))
 
 (defun make-location (x y)
-  (list x y))
+  (make-instance 'cl-geometry:point :x x :y y  ))
+
+(defgeneric x (thing)
+  (:method ((p cl-geometry:point)) (cl-geometry:x p))
+  (:method ((s spatial)) (x (location s))))
+(defgeneric y (thing)
+  (:method ((p cl-geometry:point)) (cl-geometry:y p))
+  (:method ((s spatial)) (y (location s))))

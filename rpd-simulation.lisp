@@ -1,40 +1,34 @@
 ;;;; rpd-simulation.lisp
-
-(in-package #:rpd-simulation)
+(in-package #:rpd-simulation-impl)
 
 ;;; "rpd-simulation" goes here. Hacks and glory await!
 (defclass simulation ()
-  ((queue :accessor queue :initform (pileup:make-heap #'< :key #'cdr )
-	  :initarg :queue)
+  ((queue :accessor queue
+	  :initform (pileup:make-heap #'< :key #'cdr ))
    (processes :accessor processes :initform nil)
    (current-time :accessor current-time :initform 0)))
+
+(defclass process ()
+  ((coroutine :accessor coroutine :initarg :coroutine)))
 
 (defvar *simulation* nil "The current simulation")
 (defvar *process nil "The current running process")
 
 (defmacro with-simulation (() &rest body)
   "opens a simulation context"
-  `(let ((*simulation* (make-instance 'simulation :queue )))
+  `(let ((*simulation* (make-instance 'simulation )))
      ,@body))
 
-
-(defgeneric %schedule (simulation process at)
-  (:method ((sim simulation) process at)
+(defgeneric schedule (simulation process &optional at)
+  (:method ((sim simulation) process &optional (at 1))
 	   (pileup:heap-insert
 	    (cons process (+ at (current-time sim)))
 	    (queue sim))))
 
-(defun schedule (process &optional (at 1))
-  (%schedule *simulation* process at))
-
-(defgeneric %activate (simulation process at)
+(defgeneric activate (simulation process at)
   (:method ((sim simulation) process at)
 	   (push process (processes sim))
-	   (%schedule sim process at)))
-
-(defun activate (process &key (at 1))
-  (%activate *simulation* process at)
-  process)
+	   (schedule sim process at)))
 
 (defgeneric priority (thing)
   (:method ((q pileup:heap))
@@ -53,47 +47,52 @@
 	       (while (and next-priority
 			   (= next-priority
 			      (current-time sim))))
-	       (let ((process (next-process sim)))
-		 (%simulate process nil nil))))
-	   (note "step")))
+	       (let ((p (next-process sim)))
+		 (destructuring-bind (result &rest args)
+		     (multiple-value-list (run p))
+		   (ecase result
+		     (:hold (apply #'schedule
+				   `(,sim ,p ,@args)))
+		     ;this process is dead!
+		     (:done nil)))
+		 
+		 )))))
 
-(defgeneric %simulate (thing until stop-if))
-(defmethod %simulate ((sim simulation) until stop-if)
+(defgeneric simulate (thing &key &allow-other-keys))
+(defmethod simulate ((sim simulation) &key until stop-if for &allow-other-keys) 
+	   (when (and for until)
+	     (error "Cannot specify both :for and :until.  Pick one."))
+	     
+	   (when for
+	     (setf until (+ for (current-time sim))))
+	   
 	   (iterate
-	     (for i from 0)
-	     (while (and (or (null until)
-			     (< i until))
-			 (or (null stop-if)
-			     (not (funcall stop-if
-					   (processes sim))))))
+	     (with stop-condition =
+		   (cond
+		     ((and until stop-if)
+		      (lambda (i)
+			(and (< i until)
+			     (not (funcall stop-if (processes sim))))))
+		     (until (lambda (i) (< i until)))
+		     (stop-if (lambda (i)
+				(declare (ignore i))
+				(not (funcall stop-if
+					      (processes sim)))))))
+	     (for i from (current-time sim))
+	     (while (funcall stop-condition i))
 	     (simulate-step sim)
 	     (finally (return (values i sim)))))
 
-(defclass process ()
-  ((coroutine :accessor coroutine :initarg :coroutine)))
-
-(defgeneric generate (thing)
+(defgeneric run (thing)
   (:method ((p process))
 	   (funcall (coroutine p))))
 
-(defmethod %simulate ((p process) until stop-if)
-	   (declare (ignore until stop-if))
-	   (destructuring-bind (result &rest args)
-	       (multiple-value-list (generate p))
-	     (ecase result
-	       (:hold (apply #'schedule `(,p ,@args)))
-	       (:done nil))))
-
-(defun simulate (&key until stop-if)
-  (%simulate *simulation* until stop-if))
-
-(defgeneric %note (thing format args)
-  (:method ((sim simulation) format args)
+(defgeneric note (thing format &optional args)
+  (:method ((sim simulation) format &optional args)
 	   (format T "~%[~a] " (current-time sim))
 	   (apply #'format `(T ,format ,@(ensure-list args)))))
 
-(defun note (format &rest args)
-  (%note *simulation* format args))
+
 
 (defmacro defprocess (name superclasses slots &rest extras)
   (let ((action-body (rest (find :action extras :key #'car)))
@@ -106,7 +105,7 @@
 	 ,slots
 	 ,@extras)
        ,(when func-body
-	 `(defmethod generate ((self ,name)) ,@func-body))
+	 `(defmethod run ((self ,name)) ,@func-body))
        ,(when action-body
 	 `(defmethod initialize-instance :after ((p ,name) &key &allow-other-keys)
 		     (setf (coroutine p)
