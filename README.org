@@ -4,6 +4,18 @@ inspired by simpy.
 * Usage
 See /examples
 * todo
-** spatial simulations
+** DONE spatial simulations
    CLOCK: [2010-11-25 Thu 15:50]--[2010-11-25 Thu 18:09] =>  2:19
    have a 2d discrete system based on an array, not very fast at all.
+   Turns out the array wasn't the slow part, it was cl-heap vs pileup
+** DONE continuous spatial sim
+   use an r-tree instead of an array
+** add lisp-unit
+** DONE split into multiple packages
+   CLOCK: [2010-12-07 Tue 19:03]--[2010-12-07 Tue 20:25] =>  1:22
+*** rpd-simulation-impl
+*** rpd-simulation for user-facing stuff
+** clean up SDL example
+   CLOCK: [2010-12-07 Tue 22:03]--[2010-12-07 Tue 23:39] =>  1:36
+
+
