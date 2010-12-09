@@ -26,6 +26,7 @@
 	   #:location
 	   #:with-simulation
 	   #:do-board
+	   #:*simulation-step-hook*
 	   #:x #:y
 	   #:with-spatial-simulation))
 
@@ -44,6 +45,7 @@
 			  #:with-simulation
 			  #:do-board
 			  #:x #:y
+			  #:*simulation-step-hook*
 			  #:with-spatial-simulation)
   (:export #:activate
 	   #:simulate
@@ -59,4 +61,5 @@
 	   #:with-simulation
 	   #:do-board
 	   #:x #:y
+	   #:*simulation-step-hook*
 	   #:with-spatial-simulation))

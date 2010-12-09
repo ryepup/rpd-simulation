@@ -1,5 +1,7 @@
 ;;;; rpd-simulation.lisp
 (in-package #:rpd-simulation-impl)
+(defvar *simulation-step-hook* nil
+  "list of callback functions called during each step of simulation")
 
 ;;; "rpd-simulation" goes here. Hacks and glory await!
 (defclass simulation ()
@@ -56,7 +58,9 @@
 		     ;this process is dead!
 		     (:done nil)))
 		 
-		 )))))
+		 ))
+	     (when *simulation-step-hook*
+	       (mapc #'funcall (ensure-list *simulation-step-hook*))))))
 
 (defgeneric simulate (thing &key &allow-other-keys))
 (defmethod simulate ((sim simulation) &key until stop-if for &allow-other-keys) 
