@@ -24,11 +24,14 @@
 	   #:look-around
 	   #:empty-p
 	   #:location
+	   #:make-location
 	   #:with-simulation
 	   #:do-board
 	   #:*simulation-step-hook*
 	   #:x #:y
-	   #:with-spatial-simulation))
+	   #:with-spatial-simulation
+	   #:process
+	   #:nearby-spots))
 
 (defpackage #:rpd-simulation
     (:use #:cl #:iterate)
@@ -41,12 +44,15 @@
 			  #:look-around
 			  #:empty-p
 			  #:location
+			  #:make-location
 			  #:processes
 			  #:with-simulation
 			  #:do-board
 			  #:x #:y
 			  #:*simulation-step-hook*
-			  #:with-spatial-simulation)
+			  #:with-spatial-simulation
+			  #:process
+			  #:nearby-spots)
   (:export #:activate
 	   #:simulate
 	   #:note
@@ -58,8 +64,11 @@
 	   #:look-around
 	   #:empty-p
 	   #:location
+	   #:make-location
 	   #:with-simulation
 	   #:do-board
 	   #:x #:y
 	   #:*simulation-step-hook*
-	   #:with-spatial-simulation))
+	   #:with-spatial-simulation
+	   #:process
+	   #:nearby-spots))

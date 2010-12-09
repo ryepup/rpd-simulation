@@ -20,6 +20,11 @@
 (defclass spatial-simulation (simulation)
   ((board :accessor board)))
 
+(defmethod done :after ((sim spatial-simulation) process)
+	   (set-cell (x (location process))
+		     (y (location process))
+		     nil sim))
+
 (defgeneric rectangle (thing))
 (defclass spatial2d-simulation (spatial-simulation)
   ((spatial-tree
@@ -27,14 +32,39 @@
     :initform (spatial-trees:make-spatial-tree
 	       :r :rectfun #'rectangle))))
 
+(defgeneric nearby-spots (thing)
+  (:method ((s spatial))
+	   (let* ((location (location s))
+		  (range (sight-range s))
+		  (x (x location))
+		  (y (y location))
+		  (dim (board-dimensions *simulation*))
+		  (offsets (loop for i from (* -1 range) to range
+				 collect i)))
+	     (loop for x-offset in offsets
+		   nconc
+		   (iter (for y-offset in offsets)
+			 (unless (and (zerop x-offset)
+				      (zerop y-offset)))
+			 (for nx = (mod (+ x x-offset)
+				       (first dim)))
+			 (for ny = (mod (+ y y-offset)
+				       (second dim)))
+
+			 (collect (cons (make-location nx ny)
+					(get-cell nx ny))))))))
+(defgeneric process (thing)
+  (:method ((c cons)) (cdr c)))
+(defmethod location ((c cons)) (car c))
 
 (defgeneric look-around (thing &optional predicate)
   (:documentation "returns all the spots the thing can see that match the predicate")
-  (:method ((spatial spatial) &optional (predicate #'identity))
-	   (remove-if-not predicate
-			  (find-near *simulation*
-				     (location spatial)
-				     (sight-range spatial)))))
+  (:method ((spatial spatial) &optional predicate)
+	   (if predicate
+	       (remove-if-not predicate (look-around spatial))
+	       (find-near *simulation*
+			  (location spatial)
+			  (sight-range spatial)))))
 
 (defgeneric find-near (sim location range)
   (:method ((sim spatial2d-simulation) location range)
@@ -79,9 +109,14 @@
 	   (spatial-trees:insert p (spatial-tree sim)))
 
 (defun create-board (dimensions &optional (sim *simulation*))
-  (setf (board sim) (make-array dimensions)))
+  (setf (board sim) (make-array dimensions :initial-element nil)))
+
 (defun board-dimensions (&optional (sim *simulation*))
-  (array-dimensions (board sim)))
+  (unless (get 'board-dimensions sim)
+    (setf (get 'board-dimensions sim)
+	  (array-dimensions (board sim))))
+  (get 'board-dimensions sim))
+  
 (defun set-cell (x y process &optional (sim *simulation*))
   (setf (aref (board sim) x y) process))
 (defun get-cell (x y &optional (sim *simulation*))
@@ -102,11 +137,16 @@
 	     ,@body))))))
 
 (defun make-location (x y)
-  (make-instance 'cl-geometry:point :x x :y y  ))
+;  (make-instance 'cl-geometry:point :x x :y y  )
+  (cons x y)
+  )
 
 (defgeneric x (thing)
   (:method ((p cl-geometry:point)) (cl-geometry:x p))
-  (:method ((s spatial)) (x (location s))))
+  (:method ((s spatial)) (x (location s)))
+  (:method ((c cons)) (car c)))
+
 (defgeneric y (thing)
   (:method ((p cl-geometry:point)) (cl-geometry:y p))
-  (:method ((s spatial)) (y (location s))))
+  (:method ((s spatial)) (y (location s)))
+  (:method ((c cons)) (cdr c)))

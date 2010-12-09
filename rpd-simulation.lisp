@@ -45,22 +45,28 @@
 	   (let ((queue (queue sim)))
 	     (incf (current-time sim))
 	     (iterate
+	       (with time = (current-time sim))
 	       (for next-priority = (priority queue))
 	       (while (and next-priority
-			   (= next-priority
-			      (current-time sim))))
+			   (= next-priority time)))
 	       (let ((p (next-process sim)))
 		 (destructuring-bind (result &rest args)
 		     (multiple-value-list (run p))
 		   (ecase result
-		     (:hold (apply #'schedule
-				   `(,sim ,p ,@args)))
+		     (:hold (schedule sim p (or (first args) 1)))
 		     ;this process is dead!
-		     (:done nil)))
-		 
-		 ))
-	     (when *simulation-step-hook*
-	       (mapc #'funcall (ensure-list *simulation-step-hook*))))))
+		     (:done (done sim p))))))
+
+	     (run-hooks *simulation-step-hook*)
+	     )))
+
+(defun run-hooks (hook)
+  (when hook
+    (mapc #'funcall (ensure-list hook))))
+
+(defgeneric done (sim process)
+  (:method ((sim simulation) process)
+	   (setf (processes sim) (remove process (processes sim)))))
 
 (defgeneric simulate (thing &key &allow-other-keys))
 (defmethod simulate ((sim simulation) &key until stop-if for &allow-other-keys) 

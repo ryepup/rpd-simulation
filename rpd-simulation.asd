@@ -21,5 +21,6 @@
 		:components ((:file "package")
 			     (:file "message")
 			     (:file "bees")
-			     (:file "brians-brain")))))
+			     (:file "brians-brain")
+			     (:file "ecology")))))
 
