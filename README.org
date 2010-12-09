@@ -15,7 +15,11 @@ See /examples
    CLOCK: [2010-12-07 Tue 19:03]--[2010-12-07 Tue 20:25] =>  1:22
 *** rpd-simulation-impl
 *** rpd-simulation for user-facing stuff
-** clean up SDL example
+** DONE clean up SDL example
+   :CLOCK:
+   CLOCK: [2010-12-08 Wed 18:57]--[2010-12-08 Wed 19:31] =>  0:34
    CLOCK: [2010-12-07 Tue 22:03]--[2010-12-07 Tue 23:39] =>  1:36
-
+   :END:
+** ecology example
+   CLOCK: [2010-12-08 Wed 19:32]--[2010-12-08 Wed 21:57] =>  2:25
 
