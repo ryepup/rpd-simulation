@@ -28,6 +28,8 @@
 	   #:with-simulation
 	   #:do-board
 	   #:*simulation-step-hook*
+	   #:*process-dead-hook*
+	   #:*process-after-step-hook*
 	   #:x #:y
 	   #:with-spatial-simulation
 	   #:process
@@ -50,6 +52,8 @@
 			  #:do-board
 			  #:x #:y
 			  #:*simulation-step-hook*
+			  #:*process-dead-hook*
+			  #:*process-after-step-hook*
 			  #:with-spatial-simulation
 			  #:process
 			  #:nearby-spots)
@@ -69,6 +73,8 @@
 	   #:do-board
 	   #:x #:y
 	   #:*simulation-step-hook*
+	   #:*process-dead-hook*
+	   #:*process-after-step-hook*
 	   #:with-spatial-simulation
 	   #:process
 	   #:nearby-spots))

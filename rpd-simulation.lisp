@@ -2,6 +2,10 @@
 (in-package #:rpd-simulation-impl)
 (defvar *simulation-step-hook* nil
   "list of callback functions called during each step of simulation")
+(defvar *process-dead-hook* nil
+  "callback when a process dies")
+(defvar *process-after-step-hook* nil
+  "callback after when a process steps")
 
 ;;; "rpd-simulation" goes here. Hacks and glory await!
 (defclass simulation ()
@@ -52,10 +56,15 @@
 	       (let ((p (next-process sim)))
 		 (destructuring-bind (result &rest args)
 		     (multiple-value-list (run p))
+		   (when *process-after-step-hook*
+		     (funcall *process-after-step-hook* p))
 		   (ecase result
 		     (:hold (schedule sim p (or (first args) 1)))
 		     ;this process is dead!
-		     (:done (done sim p))))))
+		     (:done
+			(when *process-dead-hook*
+			  (funcall *process-dead-hook* p))
+			(done sim p))))))
 
 	     (run-hooks *simulation-step-hook*)
 	     )))
