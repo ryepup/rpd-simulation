@@ -37,44 +37,12 @@
 
 (defpackage #:rpd-simulation
     (:use #:cl #:iterate)
-  (:shadowing-import-from #:rpd-sim-impl
-			  #:self
-			  #:*simulation*
-			  #:defprocess
-			  #:yield
-			  #:spatial
-			  #:look-around
-			  #:empty-p
-			  #:location
-			  #:make-location
-			  #:processes
-			  #:with-simulation
-			  #:do-board
-			  #:x #:y
-			  #:*simulation-step-hook*
-			  #:*process-dead-hook*
-			  #:*process-after-step-hook*
-			  #:with-spatial-simulation
-			  #:process
-			  #:nearby-spots)
-  (:export #:activate
-	   #:simulate
-	   #:note
-	   #:self
-	   #:defprocess
-	   #:do-processes
-	   #:yield
-	   #:spatial
-	   #:look-around
-	   #:empty-p
-	   #:location
-	   #:make-location
-	   #:with-simulation
-	   #:do-board
-	   #:x #:y
-	   #:*simulation-step-hook*
-	   #:*process-dead-hook*
-	   #:*process-after-step-hook*
-	   #:with-spatial-simulation
-	   #:process
-	   #:nearby-spots))
+  (:shadowing-import-from #:rpd-coroutines
+			  #:make-coroutine
+			  #:yield)
+
+  (:export #:make-simulation
+	   #:defactor #:yield
+	   #:schedule
+	   #:scheduled-time
+	   #:scheduled-item))

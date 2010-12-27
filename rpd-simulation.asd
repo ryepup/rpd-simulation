@@ -24,3 +24,11 @@
 			     (:file "brians-brain")
 			     (:file "ecology")))))
 
+(asdf:defsystem #:rpd-simulation-tests
+  :serial t
+  :depends-on (#:rpd-simulation #:lisp-unit)
+  :components ((:module
+		:tests
+		:serial t
+		:components ((:file "package")
+			     (:file "simulation")))))
