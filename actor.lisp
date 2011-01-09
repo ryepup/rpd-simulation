@@ -22,7 +22,9 @@
 	 ,slots
 	 ,@extras)
        ,(when func-body
-	  `(defmethod simulation-step ((,(first func-body) ,name)) ,@(rest func-body)))
+	  `(defmethod simulation-step ((,(first func-body) ,name)) ,@(rest func-body)
+		      1 ;;indicate we run again next turn
+		      ))
        ,(when action-body
 	  `(defmethod initialize-instance :after ((p ,name) &key &allow-other-keys)
 		      (setf (coroutine p)

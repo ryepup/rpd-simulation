@@ -5,6 +5,10 @@
 	  :initform (pileup:make-heap #'< :key #'cdr ))
    (current-time :accessor current-time :initform 0)))
 
+(defmethod print-object ((self simulation) stream)
+	   (print-unreadable-object (self stream :type t :identity t)
+	     (format stream "~a" (current-time self))))
+
 (defun make-simulation ()
   "Create a new basic simulation"
   (make-instance 'simulation))
@@ -30,29 +34,19 @@
   (:documentation "returns the next actor before the tick"))
 
 (defmethod next-actor ((self simulation))
-	   
-	   )
+	   (multiple-value-bind (sched-item not-empty-p) (pileup:heap-top (queue self))
+	     (when (and not-empty-p
+			(= (current-time self)
+			   (scheduled-time sched-item)))
+	       (scheduled-actor (pileup:heap-pop (queue self))))))
 
 (defmethod simulation-step ((sim simulation))
-	   (let ((queue (queue sim)))
-	     (incf (current-time sim))
-	     (iterate
-	       (with time = (current-time sim))
-	       (for next-priority = (priority queue))
-	       (while (and next-priority
-			   (= next-priority time)))
-	       (let ((p (next-process sim)))
-		 (destructuring-bind (result &rest args)
-		     (multiple-value-list (run p))
-		   (when *process-after-step-hook*
-		     (funcall *process-after-step-hook* p))
-		   (ecase result
-		     (:hold (schedule sim p (or (first args) 1)))
-					;this process is dead!
-		     (:done
-			(when *process-dead-hook*
-			  (funcall *process-dead-hook* p))
-			(done sim p))))))
-
-	     (run-hooks *simulation-step-hook*)
-	     ))
+	   (cl-log:log-message :debug "~a step start~%" sim)
+	   (incf (current-time sim))
+	   (iter (for actor = (next-actor sim))
+		 (while actor)
+		 (cl-log:log-message :debug "running ~a~%" actor)
+		 (let ((results (simulation-step actor)))
+		   (etypecase results
+		     (number (schedule actor results)))))
+	   (cl-log:log-message :debug "~a step end~%" sim))

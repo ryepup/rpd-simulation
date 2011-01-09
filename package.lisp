@@ -1,5 +1,6 @@
 ;;;; package.lisp
 
+#+nil
 (defpackage #:rpd-simulation-impl
     (:use #:cl #:iterate)
   (:nicknames #:rpd-sim-impl)
@@ -40,7 +41,7 @@
   (:shadowing-import-from #:rpd-coroutines
 			  #:make-coroutine
 			  #:yield)
-
+  (:shadowing-import-from #:cl-log #:log-message)
   (:export #:make-simulation
 	   #:defactor #:yield
 	   #:schedule
