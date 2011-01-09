@@ -46,4 +46,5 @@
 	   #:defactor #:yield
 	   #:schedule
 	   #:scheduled-time
-	   #:scheduled-item))
+	   #:scheduled-actor
+	   #:activate))

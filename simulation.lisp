@@ -41,12 +41,22 @@
 	       (scheduled-actor (pileup:heap-pop (queue self))))))
 
 (defmethod simulation-step ((sim simulation))
-	   (cl-log:log-message :debug "~a step start~%" sim)
 	   (incf (current-time sim))
 	   (iter (for actor = (next-actor sim))
 		 (while actor)
-		 (cl-log:log-message :debug "running ~a~%" actor)
+		 (log-message :debug "running ~a~%" actor)
 		 (let ((results (simulation-step actor)))
 		   (etypecase results
-		     (number (schedule actor results)))))
-	   (cl-log:log-message :debug "~a step end~%" sim))
+		     (number (schedule actor results))
+		     (keyword (ecase results
+				(:done (log-message :info "~a done" actor))
+				)))))
+	   (not (pileup:heap-empty-p (queue sim))))
+
+(defun simulate (sim &key until)
+  "runs the simulation until we have no more actors or the limit
+specified in UNTIL is reached."
+  (iter
+    (for i from 0)
+    (while (and (simulation-step sim)
+		(<= i (or until i))))))

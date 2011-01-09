@@ -32,4 +32,5 @@
 		:tests
 		:serial t
 		:components ((:file "package")
+			     (:file "actor")
 			     (:file "simulation")))))

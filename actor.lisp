@@ -8,6 +8,9 @@
 		       &optional ticks-from-now)
 	   (activate (simulation self) self ticks-from-now))
 
+(defmethod activate ((self actor) (actor actor) &optional ticks-from-now)
+	   (activate (simulation self) actor ticks-from-now))
+
 (defmethod simulation-step ((self actor))
 	   (funcall (coroutine self)))
 
@@ -30,6 +33,6 @@
 		      (setf (coroutine p)
 			    (let ((,(first action-body) p))
 			      (declare (ignorable ,(first action-body)))
-			      (make-coroutine ()			    
+			      (make-coroutine ()
 				,@(rest action-body)
 				))))))))

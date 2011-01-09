@@ -44,7 +44,5 @@
     (assert-eql 1 (n dcnt))
     (dotimes (n 4) (rpd-simulation::simulation-step sim))
     (assert-eql 6 (n cnt))
-    (assert-eql 2 (n dcnt))
-    )
+    (assert-eql 2 (n dcnt))))
 
-  )

@@ -2,34 +2,34 @@
 
 ;; slightly more complicated example with one process creating another
 
-(defprocess beehive ()
+(defactor beehive ()
   ((honey :initarg :honey :accessor honey))
   (:documentation "a beehive that makes bees")
-  (:action
+  (:action self
    (iterate
      (while (plusp (honey self)))
      (if (< 5 (honey self))
 	 (progn
-	   (yield :hold 10)
-	   (activate (make-instance 'bee :hive self))
+	   (yield 10)
+	   (activate self (make-instance 'bee :hive self))
 	   (decf (honey self) 5)
-	   (note "made a bee"))
-	 (yield :hold)))
-   (note "Hive dead")))
+	   (cl-log:log-message :info "made a bee"))
+	 (yield 1)))
+   (cl-log:log-message :info "Hive dead")))
 
-(defprocess bee ()
+(defactor bee ()
   ((hive :initarg :hive :accessor hive))
   (:documentation "a bee that brings honey to it's hive")
-  (:action
+  (:action self
    (dotimes (n 3)
-     (yield :hold (+ 5 (random 5)))
+     (yield (+ 5 (random 5)))
      (incf (honey (hive self)) 5)
-     (note "Returned some honey"))
-   (note "bee dying")))
+     (cl-log:log-message :info "Returned some honey"))
+   (cl-log:log-message :info "bee dying")))
 
 (defun bees ()
-  (with-simulation ()
-    (let ((hive (make-instance 'beehive :honey 10)))
-      (activate hive)
-      (simulate :until 200)
-      (note "Honey at the end: ~a" (honey hive)))))
+  (let ((sim (make-simulation))
+	(hive (make-instance 'beehive :honey 10)))
+    (activate sim hive)
+    (rpd-simulation::simulate sim :until 200)
+    (cl-log:log-message :info "Honey at the end: ~a" (honey hive))))
