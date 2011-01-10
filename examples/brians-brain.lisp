@@ -1,27 +1,32 @@
 (in-package :rpd-simulation-examples)
 
-(defprocess brian-braincell (spatial)
+(defactor brian-braincell (spatial)
   ((state :accessor state :initarg :state))
-  (:function
+  (:function self
    (let ((state (state self)))
      (setf (state self)
 	   (cond ((eq :on state) :dying)
 		 ((eq :dying state) :off)
 		 ((eq 2 (length (look-around
 				 self (lambda (c) (eq :on (state c)))))) :on)
-		 (T :off)))
-     :hold)))
+		 (T :off))))))
+
+(defun make-brians-brain ()
+  (let ((sim (make-simulation :board (rpd-simulation::make-board 90 90))))
+    (rpd-simulation::do-board (sim location)
+      (rpd-simulation:activate sim
+		(make-instance 'brian-braincell
+			       :location location
+			       :state (random-elt '(:on :off)))))
+    sim))
 
 (defun brains-brain ()
-  (with-spatial-simulation (:board '(90 90))
-    (do-board (location)
-      (activate (make-instance 'brian-braincell :location location
-			       :state (random-elt '(:on :off)))))
-    (simulate :stop-if
-	      (lambda (processes)
-		(every (lambda (p)
-			 (eq :off (state p)))
-		       processes)))))
+  (rpd-simulation::simulate (make-brians-brain)
+   :stop-if
+   (lambda (processes)
+     (every (lambda (p)
+	      (eq :off (state p)))
+	    processes))))
 
 (defun brains-brain-sdl ()
   (sdl:with-init ()

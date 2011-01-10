@@ -6,7 +6,10 @@
 Returns the scheduled item"))
 
 (defgeneric activate (sim actor &optional ticks-from-now)
-  (:documentation "adds an actor the the simulation, and schedules it to start based on ticks-from-now."))
+  (:documentation "adds an actor the the simulation, and schedules it to start based on ticks-from-now.")
+  (:method (sim (actors list) &optional ticks-from-now)
+	   (dolist (actor actors)
+	     (activate sim actor ticks-from-now))))
 
 (defgeneric simulation-step (thing)
   (:documentation "runs this things simulation step"))

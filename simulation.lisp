@@ -9,9 +9,11 @@
 	   (print-unreadable-object (self stream :type t :identity t)
 	     (format stream "~a" (current-time self))))
 
-(defun make-simulation ()
+(defun make-simulation (&key board)
   "Create a new basic simulation"
-  (make-instance 'simulation))
+  (if board
+      (make-instance 'spatial-simulation :board board)
+      (make-instance 'simulation)))
 
 (defun make-schedule-item (actor time-to-run)
   (cons actor time-to-run))
@@ -44,7 +46,6 @@
 	   (incf (current-time sim))
 	   (iter (for actor = (next-actor sim))
 		 (while actor)
-		 (log-message :debug "running ~a~%" actor)
 		 (let ((results (simulation-step actor)))
 		   (etypecase results
 		     (number (schedule actor results))
