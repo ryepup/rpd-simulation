@@ -10,6 +10,7 @@
 	       (:file "protocol")
 	       (:file "actor")
 	       (:file "simulation")
+	       (:file "spatial")
 	       (:file "logging")))
 
 (asdf:defsystem #:rpd-simulation-examples
@@ -33,4 +34,5 @@
 		:serial t
 		:components ((:file "package")
 			     (:file "actor")
-			     (:file "simulation")))))
+			     (:file "simulation")
+			     (:file "spatial")))))

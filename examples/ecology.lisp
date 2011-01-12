@@ -1,80 +1,98 @@
 (in-package :rpd-simulation-examples)
 
-(defprocess plant (spatial)
+(defactor plant (rpd-simulation::spatial)
   ((solar-energy :accessor solar-energy :initform 1))
   (:documentation "a plant")
-  (:action
-   (iterate
-     (while (and (plusp (solar-energy self))
-		 (< (solar-energy self) 100)
-		 ))
-     ;; get power from the sun
-     (incf (solar-energy self))
-     (when (can-grow-p self)
-       (if-let ((empty-spots
-		 (remove-if-not #'null (nearby-spots self) :key #'process)))
-	 (progn (decf (solar-energy self) 8)
-		(activate (make-instance 'plant
-					 :location (location (random-elt empty-spots))))
-		(yield :hold 20))))
-     (yield :hold 5))))
+  (:action self
+	   (iterate
+	     (while (alive-p self))
+	     ;; get power from the sun
+	     (incf (solar-energy self))
+	     (when (can-grow-p self)
+	       (let* ((nearby (rpd-simulation::look self))
+		      (neighbors (rpd-simulation::neighbors
+				  (rpd-simulation::location self)))
+		      (candidates (remove-if
+				   (lambda (loc)
+				     (member loc nearby
+					     :key #'rpd-simulation::location
+					     :test #'rpd-simulation::location=))
+				   neighbors )))
+		 (when-let ((candidates (and (> 6 (length nearby))
+					     candidates)))
+		   (decf (solar-energy self) 8)
+		   (activate (rpd-simulation::simulation self)
+			     (make-instance (class-name (class-of self))
+					    :location (random-elt candidates)))
+		   (yield 20))))
+	     (yield 5))))
+
+(defun alive-p (p)
+  (and (plusp (solar-energy p))
+       (< (solar-energy p) 100)))
 
 (defmethod can-grow-p ((self plant))
 	   (> (solar-energy self) 10))
 
+(defclass sdl-plant (plant) ())
+
+(defun make-ecology (&optional for-sdl-p)
+  (let ((sim (rpd-simulation:make-simulation
+	      :board (rpd-simulation::make-board 90 90))))
+    (activate
+     sim (make-instance (if for-sdl-p 'sdl-plant 'plant)
+			:location (rpd-simulation::make-location 40 60 )))
+    sim))
+
+
 (defun ecology ()
-  (with-spatial-simulation (:board '(90 90))
-    (activate (make-instance 'plant :location (make-location 40 60 )))
-    (simulate :until 1000)))
+  (rpd-simulation::simulate (make-ecology) :until 1000))
+
+(defvar *color-by-number* )
+(defvar *plant-surfaces* )
+
+(defun plant-color (p)
+  (cond ((not (alive-p p)) sdl:*black*)
+	((not (can-grow-p p)) sdl:*yellow*)
+	((< (solar-energy p) 20) sdl:*green*)
+	(T (let ((g (- 255 (* 2 (solar-energy p)))))
+	     (or (aref *color-by-number* g)
+		 (setf (aref *color-by-number* g)
+		       (sdl:color :g g)))))))
+
+(defun sdl-cell (color)
+  (let ((surface (sdl:create-surface 6 6)))
+    (sdl:fill-surface color :surface surface)
+    surface))
+
+(defun plant-surf-from-color (c)  
+  (or
+   (gethash c *plant-surfaces*)
+   (setf (gethash c *plant-surfaces*) (sdl-cell c))))
+
+(defmethod rpd-simulation::simulation-step :after ((p sdl-plant))
+	   (let ((y (rpd-simulation::y p))
+		 (x (rpd-simulation::x p))
+		 (surf (plant-surf-from-color (plant-color p))))
+	     (unless (eql surf (get 'last-surf p))
+	       (setf (get 'last-surf p) surf)
+	       (sdl:set-point-* surf
+				:x (1+ (* 6 x))
+				:y (1+ (* 6 y)))
+	       (sdl:blit-surface surf))))
 
 (defun ecology-sdl ()
   (sdl:with-init ()
     (sdl:window 540 540)
-    (setf (sdl:frame-rate) 0)
-    (let ((colors (list))
-	  (color-by-number (make-array 255 :initial-element nil))
-	  (plant-surfaces (make-hash-table)))
-      (labels ((plant-color (p)
-		 (cond ((not (can-grow-p p)) sdl:*yellow*)
-		       ((< (solar-energy p) 20) sdl:*green*)
-		       (T (let ((g (- 255 (* 2 (solar-energy p)))))
-			    (or (aref color-by-number g)
-				(setf (aref color-by-number g)
-				      (sdl:color :g g)
-
-				      )
-)))))
-	       (sdl-cell (color)
-		 (let ((surface (sdl:create-surface 6 6)))
-		   (sdl:fill-surface color :surface surface)
-		   surface))
-	       (plant-surf-from-color (c)
-		 (let* ((key (find c colors :test #'sdl:color=)))
-		   (unless key
-		     (setf (gethash c plant-surfaces) (sdl-cell c))
-		     (push c colors))
-		   (gethash c plant-surfaces)))
-	       (plant-surf (p)
-		 (plant-surf-from-color (plant-color p)))
-	       (render-plant (p surf)
-		 (let ((y (y p))
-		       (x (x p)))
-		   (unless (eql surf (get 'last-surf p))
-		     (setf (get 'last-surf p) surf)
-		     (sdl:set-point-* surf
-				      :x (1+ (* 6 x))
-				      :y (1+ (* 6 y)))
-		     (sdl:blit-surface surf)))))
-	(let* ((*simulation-step-hook* #'sdl:update-display)
-	       (dead-plant (plant-surf-from-color sdl:*black*))
-	       (*process-after-step-hook*
-		(lambda (p) (render-plant p (plant-surf p))))
-	       (rpd-simulation:*process-dead-hook*
-		(lambda (p) (render-plant p dead-plant))))
-	  (sdl:with-events ()
-	    (:quit-event () t)
-	    (:video-expose-event () (sdl:update-display))
-	    (:idle () 
-		   (ecology)
-		   (sdl:push-quit-event)))
-	  (maphash-values #'sdl:free plant-surfaces))))))
+    (setf (sdl:frame-rate) 0) 
+    (let ((sim (make-ecology T))
+	  (*color-by-number* (make-array 255 :initial-element nil))
+	  (*plant-surfaces* (make-hash-table)))
+      (sdl:with-events ()
+	(:quit-event () t)
+	(:video-expose-event () (sdl:update-display))
+	(:idle () 
+	       (rpd-simulation::simulation-step sim)
+	       (sdl:update-display)
+	       ))
+      (maphash-values #'sdl:free *plant-surfaces*))))

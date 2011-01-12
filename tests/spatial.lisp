@@ -2,7 +2,7 @@
 
 (rpd-simulation:defactor box (rpd-simulation::spatial)
   ()
-  (:function self))
+  (:function self 1))
 
 (define-test board/adding
   (let ((sim (rpd-simulation:make-simulation
@@ -27,13 +27,23 @@
 	(box2 (make-instance 'box :location (rpd-simulation::make-location 31 30)))
 	(box3 (make-instance 'box :location (rpd-simulation::make-location 32 30))))
     (rpd-simulation:activate sim (list box box2 box3))
+    (assert-eq 1 (length (rpd-simulation::look box)) "a")
     (assert-eq box2 (first (rpd-simulation::look box)) "a")
     (assert-eq box2 (first (rpd-simulation::look box3)) "b")
     (assert-eq 2 (length (rpd-simulation::look box2)))
-    (assert-eq 2 (length (rpd-simulation::look box :range 2)))
-    
+    (assert-eq 2 (length (rpd-simulation::look box :range 2)))    
     (assert-eq box3 (first (rpd-simulation::look box :range 2
 						 :predicate (lambda (match)
 							      (eq box3 match)))))
-
+    (rpd-simulation::simulation-step sim)
+    ;;still the same
+    (assert-eq 1 (length (rpd-simulation::look box)) "a")
+    (assert-eq box2 (first (rpd-simulation::look box)) "a")
+    (assert-eq box2 (first (rpd-simulation::look box3)) "b")
+    (assert-eq 2 (length (rpd-simulation::look box2)))
+    (assert-eq 2 (length (rpd-simulation::look box :range 2)))    
+    (assert-eq box3 (first (rpd-simulation::look box :range 2
+						 :predicate (lambda (match)
+							      (eq box3 match)))))
+    
     ))

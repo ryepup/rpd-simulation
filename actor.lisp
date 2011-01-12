@@ -2,14 +2,21 @@
 
 (defclass actor ()
   ((coroutine :accessor coroutine :initarg :coroutine)
-   (simulation :accessor simulation :initform nil)))
+   (simulation :accessor simulation :initform nil)
+   (lifespan :accessor lifespan :initform 0)))
 
-(defmethod schedule ((self actor)
-		       &optional ticks-from-now)
+(defmethod print-object ((self actor) stream)
+	   (print-unreadable-object (self stream :type t :identity t)
+	     (format stream "age:~a" (lifespan self))))
+
+(defmethod schedule ((self actor) &optional ticks-from-now)
 	   (activate (simulation self) self ticks-from-now))
 
 (defmethod activate ((self actor) (actor actor) &optional ticks-from-now)
 	   (activate (simulation self) actor ticks-from-now))
+
+(defmethod simulation-step :before ((self actor))
+	   (incf (lifespan self)))
 
 (defmethod simulation-step ((self actor))
 	   (funcall (coroutine self)))

@@ -46,3 +46,19 @@
     (assert-eql 6 (n cnt))
     (assert-eql 2 (n dcnt))))
 
+(define-test simulation/until
+  (let* ((sim (rpd-simulation:make-simulation))
+	 (cnt (make-instance 'counter)))
+    (assert-eql 0 (n cnt))
+    (rpd-simulation:activate sim cnt)
+    (rpd-simulation::simulate sim :until 5)
+    (assert-eql 5 (n cnt))))
+
+(define-test simulation/stop-if
+  (let* ((sim (rpd-simulation:make-simulation))
+	 (cnt (make-instance 'counter)))
+    (assert-eql 0 (n cnt))
+    (rpd-simulation:activate sim cnt)
+    (rpd-simulation::simulate sim :stop-if (lambda () (eq (n cnt) 4)))
+    (assert-eql 4 (rpd-simulation::current-time sim))))
+
