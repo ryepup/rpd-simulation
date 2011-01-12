@@ -16,6 +16,14 @@
   (and (= (x loc1) (x loc2))
        (= (y loc1) (y loc2))))
 
+(defgeneric deep-copy (thing)
+  (:method ((loc location))
+	   (make-location (x loc) (y loc))))
+
+(defclass spatial ()
+  ((location :accessor location :initarg :location))
+  (:documentation "indicates the actor is spatially-aware"))
+
 (defmethod x ((s spatial)) (x (location s)))
 (defmethod (setf x) (val (s spatial))
 	   (setf (x (location s))
@@ -25,14 +33,6 @@
 (defmethod (setf y) (val (s spatial))
 	   (setf (y (location s))
 		 val))
-
-(defgeneric deep-copy (thing)
-  (:method ((loc location))
-	   (make-location (x loc) (y loc))))
-
-(defclass spatial ()
-  ((location :accessor location :initarg :location))
-  (:documentation "indicates the actor is spatially-aware"))
 
 (defmethod print-object ((self spatial) stream)
 	   (print-unreadable-object (self stream :type t :identity t)
