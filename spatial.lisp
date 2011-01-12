@@ -36,23 +36,7 @@
 
 (defmethod print-object ((self spatial) stream)
 	   (print-unreadable-object (self stream :type t :identity t)
-	     (format stream "(~a,~a)" (x (location self))
-		     (y (location self))
-		     )))
-
-#+nil(defmethod simulation-step :around ((self spatial))
-	   (call-next-method)
-	   
-	   #+nil(let ((l1 (deep-copy (location self))))
-	     (prog1
-		 
-	       (unless (location= l1 (location self))
-		 ;;remove us and re-add
-		 (remove-from-world (simulation self) self)
-		 (add-to-world (simulation self) self)
-		 ))
-	     )
-	   )
+	     (format stream "(~a,~a)" (x self) (y self))))
 
 (defclass spatial-simulation (simulation)
   ((board :accessor board :initarg :board))

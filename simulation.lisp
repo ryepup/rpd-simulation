@@ -37,8 +37,7 @@
 (defgeneric deactivate (sim actor)
   (:method ((sim simulation) (actor actor)) 
 	   (setf (actors sim)
-		 (delete actor (actors sim)))
-	   #+nil(log-message :info "~a done" actor)))
+		 (delete actor (actors sim)))))
 
 (defgeneric next-actor (sim)
   (:documentation "returns the next actor before the tick"))
@@ -60,8 +59,6 @@
 		     (keyword (ecase results
 				(:done (deactivate sim actor))
 				)))))
-	   #+nil(log-message :info "Step ~a done; ~a actors" (current-time sim)
-			(length (actors sim)))
 	   (not (pileup:heap-empty-p (queue sim))))
 
 (defun simulate (sim &key until stop-if)
