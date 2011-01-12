@@ -2,14 +2,14 @@
 
 (defvar *brain-cells* (make-hash-table))
 
-(defactor brian-braincell (rpd-simulation::spatial)
+(defactor brian-braincell (spatial)
   ((state :accessor state :initarg :state))
   (:function self
    (let ((state (state self)))
      (setf (state self)
 	   (cond ((eq :on state) :dying)
 		 ((eq :dying state) :off)
-		 ((eq 2 (length (rpd-simulation::look
+		 ((eq 2 (length (look
 				 self
 				 :predicate (lambda (c) (eq :on (state c)))))) :on)
 		 (T :off)))
@@ -20,9 +20,9 @@
 	     (format stream "~a" (state self))))
 
 (defun make-brians-brain ()
-  (let ((sim (make-simulation :board (rpd-simulation::make-board 90 90))))
-    (rpd-simulation::do-board (sim location)
-      (rpd-simulation:activate sim
+  (let ((sim (make-simulation :board (make-board 90 90))))
+    (do-board (sim location)
+      (activate sim
 		(make-instance 'brian-braincell
 			       :location location
 			       :state (random-elt '(:on :off)))))
@@ -31,13 +31,13 @@
 (defun brains-brain ()
   (let ((*brain-cells* (make-hash-table))
 	(sim (make-brians-brain)))
-    (rpd-simulation::simulate sim
-			      :stop-if
-			      (lambda ()
-				(prog1
-				    (zerop (+ (gethash :on *brain-cells* 0)
-					      (gethash :dying *brain-cells* 0)))
-				  (clrhash *brain-cells*))))
+    (simulate sim
+	      :stop-if
+	      (lambda ()
+		(prog1
+		    (zerop (+ (gethash :on *brain-cells* 0)
+			      (gethash :dying *brain-cells* 0)))
+		  (clrhash *brain-cells*))))
     sim))
 
 (defun brains-brain-sdl ()
@@ -55,12 +55,12 @@
 	  (:quit-event () t)
 	  (:video-expose-event () (sdl:update-display))
 	  (:idle () 
-		 (rpd-simulation::simulation-step sim)
+		 (simulation-step sim)
 		 (sdl:clear-display sdl:*black*)
-		 (dolist (cell (rpd-simulation::actors sim))
+		 (dolist (cell (actors sim))
 		   (unless (eq (state cell) :off)
-		     (let ((y (rpd-simulation::y cell))
-			   (x (rpd-simulation::x cell))
+		     (let ((y (y cell))
+			   (x (x cell))
 			   (surf (if (eq (state cell) :dying)
 				     dying-surf alive-surf)))
 		       (sdl:set-point-* surf

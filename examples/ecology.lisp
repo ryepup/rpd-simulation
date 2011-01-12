@@ -1,6 +1,6 @@
 (in-package :rpd-simulation-examples)
 
-(defactor plant (rpd-simulation::spatial)
+(defactor plant (spatial)
   ((solar-energy :accessor solar-energy :initform 1))
   (:documentation "a plant")
   (:action self
@@ -9,19 +9,18 @@
 	     ;; get power from the sun
 	     (incf (solar-energy self))
 	     (when (can-grow-p self)
-	       (let* ((nearby (rpd-simulation::look self))
-		      (neighbors (rpd-simulation::neighbors
-				  (rpd-simulation::location self)))
+	       (let* ((nearby (look self))
+		      (neighbors (neighbors (location self)))
 		      (candidates (remove-if
 				   (lambda (loc)
 				     (member loc nearby
-					     :key #'rpd-simulation::location
-					     :test #'rpd-simulation::location=))
+					     :key #'location
+					     :test #'location=))
 				   neighbors )))
 		 (when-let ((candidates (and (> 6 (length nearby))
 					     candidates)))
 		   (decf (solar-energy self) 8)
-		   (activate (rpd-simulation::simulation self)
+		   (activate (simulation self)
 			     (make-instance (class-name (class-of self))
 					    :location (random-elt candidates)))
 		   (yield 20))))
@@ -37,16 +36,16 @@
 (defclass sdl-plant (plant) ())
 
 (defun make-ecology (&optional for-sdl-p)
-  (let ((sim (rpd-simulation:make-simulation
-	      :board (rpd-simulation::make-board 90 90))))
+  (let ((sim (make-simulation
+	      :board (make-board 90 90))))
     (activate
      sim (make-instance (if for-sdl-p 'sdl-plant 'plant)
-			:location (rpd-simulation::make-location 40 60 )))
+			:location (make-location 40 60 )))
     sim))
 
 
 (defun ecology ()
-  (rpd-simulation::simulate (make-ecology) :until 1000))
+  (simulate (make-ecology) :until 1000))
 
 (defvar *color-by-number* )
 (defvar *plant-surfaces* )
@@ -70,9 +69,9 @@
    (gethash c *plant-surfaces*)
    (setf (gethash c *plant-surfaces*) (sdl-cell c))))
 
-(defmethod rpd-simulation::simulation-step :after ((p sdl-plant))
-	   (let ((y (rpd-simulation::y p))
-		 (x (rpd-simulation::x p))
+(defmethod simulation-step :after ((p sdl-plant))
+	   (let ((y (y p))
+		 (x (x p))
 		 (surf (plant-surf-from-color (plant-color p))))
 	     (unless (eql surf (get 'last-surf p))
 	       (setf (get 'last-surf p) surf)
@@ -92,7 +91,7 @@
 	(:quit-event () t)
 	(:video-expose-event () (sdl:update-display))
 	(:idle () 
-	       (rpd-simulation::simulation-step sim)
+	       (simulation-step sim)
 	       (sdl:update-display)
 	       ))
       (maphash-values #'sdl:free *plant-surfaces*))))

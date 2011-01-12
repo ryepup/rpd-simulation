@@ -29,9 +29,9 @@
    (len :initarg :len :accessor len))
   (:documentation "a simple process")
   (:action self
-   (cl-log:log-message :info "Starting ~a" (i self))
+   (log-message :info "Starting ~a" (i self))
    (yield 100)
-   (cl-log:log-message :info "Arrived ~a" (i self))))
+   (log-message :info "Arrived ~a" (i self))))
 
 (defun message ()
   (let ((sim (make-simulation))
@@ -39,5 +39,5 @@
 	(p2 (make-instance 'message :i 2 :len 33)))
     (activate sim p1)
     (activate sim p2 6)
-    (rpd-simulation::simulate sim :until 200 )
-    (cl-log:log-message :info "done")))
+    (simulate sim :until 200 )
+    (log-message :info "done")))

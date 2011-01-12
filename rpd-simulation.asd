@@ -2,10 +2,10 @@
 
 (asdf:defsystem #:rpd-simulation
   :serial t
-  :depends-on (#:alexandria #:cl-geometry
-               #:rpd-coroutines #:cl-log
-               #:iterate #:spatial-trees
-	       #:pileup)
+  :depends-on (#:alexandria #:rpd-coroutines
+			    #:cl-log
+			    #:iterate #:spatial-trees
+			    #:pileup)
   :components ((:file "package")
 	       (:file "protocol")
 	       (:file "actor")
@@ -28,7 +28,7 @@
 
 (asdf:defsystem #:rpd-simulation-tests
   :serial t
-  :depends-on (#:rpd-simulation #:lisp-unit)
+  :depends-on (#:rpd-simulation #:lisp-unit #:cl-log)
   :components ((:module
 		:tests
 		:serial t
