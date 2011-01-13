@@ -11,6 +11,7 @@
 	       (:file "actor")
 	       (:file "simulation")
 	       (:file "spatial")
+	       (:file "resources")
 	       (:file "logging")))
 
 (asdf:defsystem #:rpd-simulation-examples
@@ -35,4 +36,5 @@
 		:components ((:file "package")
 			     (:file "actor")
 			     (:file "simulation")
-			     (:file "spatial")))))
+			     (:file "spatial")
+			     (:file "resources")))))

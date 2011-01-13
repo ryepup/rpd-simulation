@@ -10,7 +10,7 @@ See /examples
    Turns out the array wasn't the slow part, it was cl-heap vs pileup
 ** DONE continuous spatial sim
    use an r-tree instead of an array
-** add lisp-unit
+** DONE add lisp-unit
 ** DONE split into multiple packages
    CLOCK: [2010-12-07 Tue 19:03]--[2010-12-07 Tue 20:25] =>  1:22
 *** rpd-simulation-impl
@@ -20,6 +20,8 @@ See /examples
    CLOCK: [2010-12-08 Wed 18:57]--[2010-12-08 Wed 19:31] =>  0:34
    CLOCK: [2010-12-07 Tue 22:03]--[2010-12-07 Tue 23:39] =>  1:36
    :END:
-** ecology example
+** DONE ecology example
    CLOCK: [2010-12-08 Wed 19:32]--[2010-12-08 Wed 21:57] =>  2:25
 
+** redefining actions is weird; some strange combo of :after and lisp-unit
+   looks to be when you switch between :function and :action for an actor

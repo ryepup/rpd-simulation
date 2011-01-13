@@ -23,4 +23,13 @@
 	   #:location
 	   #:x #:y
 	   #:neighbors
-	   #:board-elt))
+	   #:bounding-box
+	   #:make-bounding-box
+	   #:board-elt
+	   #:make-level
+	   #:amount
+	   #:full-p
+	   #:empty-p
+	   #:can-accept-p
+	   #:can-provide-p
+	   #:capacity))

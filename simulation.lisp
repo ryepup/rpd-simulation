@@ -25,8 +25,9 @@
 
 (defmethod activate ((self simulation) (actor actor)
 		     &optional ticks-from-now)
-	   (when  (zerop (lifespan actor)) 
-	     (setf (simulation actor) self)
+	   (unless (get 'activated actor nil) 
+	     (setf (simulation actor) self
+		   (get 'activated actor) T)	     
 	     (push actor (actors self)))	   
 	   (pileup:heap-insert
 	    (make-schedule-item
@@ -49,16 +50,32 @@
 			   (scheduled-time sched-item)))
 	       (scheduled-actor (pileup:heap-pop (queue self))))))
 
+(defun process-results (sim actor results &rest args)
+  (etypecase results
+    (number (schedule actor results))
+    (keyword (ecase results
+	       (:done (deactivate sim actor))
+	       ((:incf :decf) (destructuring-bind (res &optional (value 1 value-supplied-p)) args
+			(let* ((testfn (if value-supplied-p
+					   (lambda () (adjust res results value))
+					   (lambda () (adjust res results))))
+			       (successfn (lambda ()
+					    (schedule actor 1)))
+			       (qr (make-instance 'queuer
+						  :test testfn
+						  :success successfn)))
+			  ;; run it once, reschedule if we don't succeed
+			  (unless (eq :done (simulation-step qr))
+			    (log-message :debug "need to queue")
+			    (activate sim qr)))))))))
+
 (defmethod simulation-step ((sim simulation))
 	   (incf (current-time sim))
 	   (iter (for actor = (next-actor sim))
 		 (while actor)
-		 (let ((results (simulation-step actor)))
-		   (etypecase results
-		     (number (schedule actor results))
-		     (keyword (ecase results
-				(:done (deactivate sim actor))
-				)))))
+		 (apply #'process-results sim actor
+			(multiple-value-list
+			    (simulation-step actor))))
 	   (not (pileup:heap-empty-p (queue sim))))
 
 (defun simulate (sim &key until stop-if)

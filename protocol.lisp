@@ -13,3 +13,10 @@ Returns the scheduled item"))
 
 (defgeneric simulation-step (thing)
   (:documentation "runs this things simulation step"))
+
+(defgeneric amount (thing))
+(defgeneric full-p (thing))
+(defgeneric can-accept-p (thing value))
+(defgeneric empty-p (thing))
+(defgeneric can-provide-p (thing value))
+(defgeneric adjust (thing direction &optional value))
