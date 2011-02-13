@@ -2,7 +2,12 @@
 
 (defclass level ()
   ((amount :accessor amount :initarg :amount :initform 0)
-   (capacity :accessor capacity :initarg :capacity :initform nil)))
+   (capacity :accessor capacity :initarg :capacity :initform nil)
+   (onchange :accessor onchange :initarg :onchange :initform nil)))
+
+(defmethod (setf amount) :before (val (self level))
+	   (when (onchange self)
+	     (funcall (onchange self) (amount self) val)))
 
 (defmethod print-object ((self level) stream)
 	   (print-unreadable-object (self stream :type t :identity t)
@@ -22,11 +27,14 @@
 (defmethod can-provide-p ((self level) (value number))
 	   (not (minusp (- (amount self) value))))
 
-(defun make-level (&key capacity initial-amount &aux (level (make-instance 'level)))
+(defun make-level (&key capacity initial-amount onchange
+		   &aux (level (make-instance 'level)))
   (when capacity
     (setf (capacity level) capacity))
   (when initial-amount
     (setf (amount level) initial-amount))
+  (when onchange
+    (setf (onchange level) onchange))
   level)
 
 (defmethod adjust ((self level) (dir (eql :incf)) &optional (value 1))
