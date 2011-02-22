@@ -2,19 +2,66 @@
 
 ;;; locations in space
 (defclass location ()
-  ((x :initarg :x :accessor x)
-   (y :initarg :y :accessor y)))
+  ((point :accessor point :initarg :point :initform nil)))
 
+(defmethod print-object ((self location) stream)
+	   (print-unreadable-object (self stream :type t :identity t)
+	     (format stream "~a" (point self))))
+
+
+(defmethod x ((self location))
+	   (paths:point-x (point self)))
+(defmethod (setf x) (val (l location))
+	   (setf (point l)
+		 (paths:p+ (point l)
+			   (paths:make-point val 0))))
+(defmethod y ((self location))
+	   (paths:point-y (point self)))
+(defmethod (setf y) (val (l location))
+	   (setf (point l)
+		 (paths:p+ (point l)
+			   (paths:make-point 0 val))))
 (defun make-location (x y)
-  (make-instance 'location :x x :y y))
+  (make-instance 'location :point (paths:make-point x y)))
 
-(defun location+ (location n)  
-  (make-location (+ (x location) n)
-		 (+ (y location) n)))
+(defgeneric location- (l1 l2)
+  (:method ((l1 location) (l2 location))
+	   (make-instance 'location
+			  :point (paths:p- (point l1) (point l2))
+	   )
+  ))
+
+(defgeneric location+ (location thing)
+  (:method (x (_ null)) x)
+  (:method ((_ null) x) x)
+
+  (:method ((l location) (list list))
+	   (reduce #'location+ list :initial-value l))
+  (:method ((l1 location) (l2 location))
+	   (make-location (+ (x l1) (x l2))
+			  (+ (y l1) (y l2))))
+  (:method ((location location) (n number))
+	   (make-location (+ (x location) n)
+			  (+ (y location) n))))
 
 (defun location= (loc1 loc2)
   (and (= (x loc1) (x loc2))
        (= (y loc1) (y loc2))))
+
+(defgeneric normalize (thing)
+  (:method ((self location)) (limit 1 self)))
+
+(defgeneric scale (thing amount)
+  (:method ((_ null) amt) nil)
+  (:method ((self location) amount)
+	   (make-instance 'location :point (paths:p* (point self) amount))))
+
+(defgeneric limit (limit thing)
+  (:method (limit (self location))
+	   (let ((mag (magnitude self)))
+	     (if (< limit mag)
+		 (scale self (/ limit mag))
+		 (deep-copy self)))))
 
 (defgeneric deep-copy (thing)
   (:method ((loc location))
@@ -23,6 +70,19 @@
 (defclass spatial ()
   ((location :accessor location :initarg :location))
   (:documentation "indicates the actor is spatially-aware"))
+
+(defmethod (setf location) :around (new-value (self spatial))
+	   (remove-from-world (simulation self) self)
+	   (prog1
+	       (call-next-method)
+	     (add-to-world (simulation self) self)
+	     )
+	   )
+
+(defgeneric magnitude (thing)
+  (:method ((self location)) (paths:point-norm (point self)))
+  (:method ((self spatial)) (magnitude (location self))))
+
 
 (defmethod x ((s spatial)) (x (location s)))
 (defmethod (setf x) (val (s spatial))
@@ -53,7 +113,7 @@
 
 (defun make-bounding-box (location size
 		   &aux (x (x location))
-		   (y (y location)))
+		   (y (y location))) 
   (rectangles:make-rectangle
    :lows (list x y) 
    :highs (list (+ x size) (+ y size))))
@@ -121,7 +181,7 @@
   (:method ((self spatial-simulation) bounding-box &optional predicate)
 	   (board-search (board self) bounding-box predicate))
   (:method ((self board) bounding-box &optional predicate)
-	   (declare (ignore predicate))
+	   (declare (ignore predicate))	   
 	   (spatial-trees:search bounding-box (index self))))
 
 (defgeneric %do-board (thing fn)

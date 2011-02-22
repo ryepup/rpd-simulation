@@ -47,3 +47,23 @@
 							      (eq box3 match)))))
     
     ))
+
+
+
+(define-test location-basics
+  (let ((l (make-location 3 4)) m)
+    (assert-float-equal 5 (magnitude l))
+    (setf m (limit 5 l))
+    (assert-true (location= m l))
+    (assert-float-equal 5 (magnitude m))
+    (setf m (limit 3 l))
+    (assert-float-equal 3 (magnitude m) m)
+    (assert-true (location= (make-location 3 3)
+			    (location+ (make-location 1 1) 2)))
+    (assert-true (location= (make-location 3 3)
+			    (location+ (make-location 1 1)
+				       (list (make-location 1 1)
+					     (make-location 1 1)))))
+    
+    )
+  )

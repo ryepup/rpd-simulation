@@ -3,7 +3,7 @@
 (asdf:defsystem #:rpd-simulation
   :serial t
   :depends-on (#:alexandria #:rpd-coroutines
-			    #:cl-log
+			    #:cl-log #:cl-paths
 			    #:iterate #:spatial-trees
 			    #:pileup)
   :components ((:file "package")
@@ -17,6 +17,7 @@
 (asdf:defsystem #:rpd-simulation-examples
   :serial t
   :depends-on (#:rpd-simulation #:iterate
+				#:cl-paths
 				#:lispbuilder-sdl)
   :components ((:module
 		:examples

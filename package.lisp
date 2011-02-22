@@ -21,6 +21,11 @@
 	   #:make-location
 	   #:location=
 	   #:location
+	   #:location+
+	   #:location-
+	   #:magnitude
+	   #:scale
+	   #:limit
 	   #:x #:y
 	   #:neighbors
 	   #:bounding-box
